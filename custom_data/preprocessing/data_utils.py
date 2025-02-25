@@ -50,6 +50,12 @@ def get_CUSTOMDATA(num_training=652845, num_validation=72534, num_test=363251, s
     X_train = X_train[mask]
     y_train = y_train[mask]
 
+    if subtract_mean:
+      mean_signal = np.mean(X_train, axis=0)
+      X_train -= mean_signal
+      X_val -= mean_signal
+      X_test -= mean_signal
+
     return {
         'X_train': X_train, 'y_train': y_train,
         'X_val': X_val, 'y_val': y_val,
