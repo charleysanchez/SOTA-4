@@ -67,12 +67,17 @@ class EMGHandData:
             self.labels = None
             self.label_indices = None
 
-    def __len__(self) -> int:
-        return len(self.data)
-    
+    def __enter__(self) -> EMGSessionData:
+        return self
 
-    def __getitem__(self, idx: Union[int, slice]) -> np.ndarray:
-        return self.data[idx]
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self._file.close()
+
+    def __len__(self) -> int:
+        return len(self.timeseries)
+
+    def __getitem__(self, key: slice | str) -> np.ndarray:
+        return self.timeseries[key]
     
 
     def slice(self, start_t: float = -np.inf, end_t: float = np.inf) -> Tuple[np.ndarray, np.ndarray]:
