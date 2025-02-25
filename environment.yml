@@ -1,5 +1,5 @@
 # conda env create -f environment.yml
-name: emg2qwerty
+name: SOTA-4
 channels:
   - pytorch
   - nvidia
