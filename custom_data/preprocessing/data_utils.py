@@ -5,7 +5,9 @@ import numpy as np
 def load_SUBJECT(filename):
     """ load single subject file """
     # with open(filename, 'r') as csvfile:
+    np.random.seed(0)
     data = np.genfromtxt(filename, delimiter=',', skip_header=1, dtype=float, usecols=range(1, 15))
+    np.random.shuffle(data)
     X = data[:, :8]
     y = data[:, 8:]
     return X, y
@@ -37,7 +39,7 @@ def get_CUSTOMDATA(num_training=652845, num_validation=72534, num_test=363251, s
         if script_dir == '/': # if hit root, raise error
             raise FileNotFoundError("SOTA-4 directory not found!")
 
-    customdata_dir = os.path.join(sota_dir, 'custom_data/data')
+    customdata_dir = os.path.join(sota_dir, 'custom_data/kao_data')
     X_train, y_train, X_test, y_test = load_CUSTOMDATA(customdata_dir)
 
     # create a mask to get appropriate validation elements out of X_train
