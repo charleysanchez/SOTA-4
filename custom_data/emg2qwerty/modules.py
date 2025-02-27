@@ -1,7 +1,14 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
 from collections.abc import Sequence
 
 import torch
 from torch import nn
+
 
 class SpectrogramNorm(nn.Module):
     """A `torch.nn.Module` that applies 2D batch normalization over spectrogram
@@ -26,14 +33,14 @@ class SpectrogramNorm(nn.Module):
         self.batch_norm = nn.BatchNorm2d(channels)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        T, N, bands, C, freq = inputs.shape  # (T, N, bands=1, C=16, freq)
+        T, N, bands, C, freq = inputs.shape  # (T, N, bands=2, C=16, freq)
         assert self.channels == bands * C
 
-        x = inputs.movedim(0, -1)  # (N, bands=1, C=8, freq, T)
+        x = inputs.movedim(0, -1)  # (N, bands=2, C=16, freq, T)
         x = x.reshape(N, bands * C, freq, T)
         x = self.batch_norm(x)
         x = x.reshape(N, bands, C, freq, T)
-        return x.movedim(-1, 0)  # (T, N, bands=1, C=8, freq)
+        return x.movedim(-1, 0)  # (T, N, bands=2, C=16, freq)
 
 
 class RotationInvariantMLP(nn.Module):
@@ -103,6 +110,65 @@ class RotationInvariantMLP(nn.Module):
             return x.mean(dim=2)
 
 
+class MultiBandRotationInvariantMLP(nn.Module):
+    """A `torch.nn.Module` that applies a separate instance of
+    `RotationInvariantMLP` per band for inputs of shape
+    (T, N, num_bands, electrode_channels, ...).
+
+    Returns a tensor of shape (T, N, num_bands, mlp_features[-1]).
+
+    Args:
+        in_features (int): Number of input features to the MLP. For an input
+            of shape (T, N, num_bands, C, ...), this should be equal to
+            C * ... (that is, the flattened size from the channel dim onwards).
+        mlp_features (list): List of integers denoting the number of
+            out_features per layer in the MLP.
+        pooling (str): Whether to apply mean or max pooling over the outputs
+            of the MLP corresponding to each offset. (default: "mean")
+        offsets (list): List of positional offsets to shift/rotate the
+            electrode channels by. (default: ``(-1, 0, 1)``).
+        num_bands (int): ``num_bands`` for an input of shape
+            (T, N, num_bands, C, ...). (default: 2)
+        stack_dim (int): The dimension along which the left and right data
+            are stacked. (default: 2)
+    """
+
+    def __init__(
+        self,
+        in_features: int,
+        mlp_features: Sequence[int],
+        pooling: str = "mean",
+        offsets: Sequence[int] = (-1, 0, 1),
+        num_bands: int = 2,
+        stack_dim: int = 2,
+    ) -> None:
+        super().__init__()
+        self.num_bands = num_bands
+        self.stack_dim = stack_dim
+
+        # One MLP per band
+        self.mlps = nn.ModuleList(
+            [
+                RotationInvariantMLP(
+                    in_features=in_features,
+                    mlp_features=mlp_features,
+                    pooling=pooling,
+                    offsets=offsets,
+                )
+                for _ in range(num_bands)
+            ]
+        )
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        assert inputs.shape[self.stack_dim] == self.num_bands
+
+        inputs_per_band = inputs.unbind(self.stack_dim)
+        outputs_per_band = [
+            mlp(_input) for mlp, _input in zip(self.mlps, inputs_per_band)
+        ]
+        return torch.stack(outputs_per_band, dim=self.stack_dim)
+
+
 class TDSConv2dBlock(nn.Module):
     """A 2D temporal convolution block as per "Sequence-to-Sequence Speech
     Recognition with Time-Depth Separable Convolutions, Hannun et al"
@@ -145,7 +211,7 @@ class TDSConv2dBlock(nn.Module):
 
         # Layer norm over C
         return self.layer_norm(x)  # TNC
-    
+
 
 class TDSFullyConnectedBlock(nn.Module):
     """A fully connected block as per "Sequence-to-Sequence Speech
@@ -172,7 +238,7 @@ class TDSFullyConnectedBlock(nn.Module):
         x = self.fc_block(x)
         x = x + inputs
         return self.layer_norm(x)  # TNC
-    
+
 
 class TDSConvEncoder(nn.Module):
     """A time depth-separable convolutional encoder composing a sequence
@@ -187,7 +253,6 @@ class TDSConvEncoder(nn.Module):
             of channels per `TDSConv2dBlock`.
         kernel_width (int): The kernel size of the temporal convolutions.
     """
-
 
     def __init__(
         self,

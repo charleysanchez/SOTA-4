@@ -138,8 +138,8 @@ class WindowedEMGDataModule(pl.LightningDataModule):
 
 
 class TDSConvCTCModule(pl.LightningModule):
-    NUM_BANDS: ClassVar[int] =1
-    ELECTRODE_CHANNELS: ClassVar[int] = 8
+    NUM_BANDS: ClassVar[int] = 2
+    ELECTRODE_CHANNELS: ClassVar[int] = 16
 
     def __init__(
         self,

@@ -210,6 +210,35 @@ class LabelData:
             assert (np.diff(self.timestamps) >= 0).all(), "Timestamps are not monotonic"
 
     @classmethod
+    def key_to_finger_mapping(
+        cls,
+        key: str | Mapping[str, any]
+    ):
+        finger_map = {
+            "right_pointer": ['y', 'h', 'n', 'u', 'j', 'm', '6', '7'],
+            "left_pointer": ['r', 'f', 'v', 't', 'g', 'b', '4', '5'],
+
+            "right_middle": ['i', 'k', ',', '8'],
+            "left_middle": ['e', 'd', 'c', '3'],
+
+            "right_ring": ['o', 'l', '.', '9'],
+            "left_ring": ['w', 's', 'x', '2'],
+
+            "right_pinky": ['p', ';', '/', '0', '-', '=', '[', ']', '\\', "'", 'right shift'],
+            "left_pinky": ['q', 'a', 'z', '1', '`', 'tab', 'capslock', 'left shift'],
+
+            "right_thumb": [' '],
+            "left_thumb": [' '],
+            }
+        
+        key = key.lower()
+        for finger, keys in finger_map.items():
+            if key in keys:
+                return finger
+            
+        return "unknown finger"
+
+    @classmethod
     def from_keystrokes(
         cls,
         keystrokes: Sequence[Mapping[str, Any]],

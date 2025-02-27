@@ -45,7 +45,7 @@ def main(config: DictConfig):
     def _full_session_paths(dataset: ListConfig) -> list[Path]:
         sessions = [session["session"] for session in dataset]
         return [
-            Path(config.dataset.root).joinpath(f"{session}.csv")
+            Path(config.dataset.root).joinpath(f"{session}.hdf5")
             for session in sessions
         ]
 
