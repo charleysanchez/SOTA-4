@@ -6,103 +6,20 @@
 
 from __future__ import annotations
 
-import csv
+import json
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field, InitVar
+from pathlib import Path
+from typing import Any, ClassVar
+
+import h5py
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import Dataset, DataLoader
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Any, Optional, Callable, Tuple, List, Dict, Union
-import pandas as pd
 
 from emg2qwerty.charset import CharacterSet, charset
 from emg2qwerty.transforms import ToTensor, Transform
 
-
-@dataclass
-class EMGHandData:
-    """A read-only interface to Prof. Kao's EMG dataset stored in CSV format.
-    
-    This class provides a simplified interface to access the EMG data and labels
-    from CSV files. Each CSV file contains timestamps and 8 EMG channels.
-    
-    Attributes:
-        csv_path (Path): Path to the CSV file
-        label_map (Dict): Mapping from label strings to integers
-        data (np.ndarray): EMG data of shape (T, C) where T is the number of time steps
-                           and C is the number of channels (8)
-        timestamps (np.ndarray): Timestamps of shape (T,)
-        labels (np.ndarray): Labels of shape (T,) - if provided
-    """
-
-    csv_path: Path
-    finger_columns: List[str] = field(default_factory=lambda: [
-        "thumb", "index", "middle", "ring", "pinky", "rest"
-    ])
-
-    def __post_init__(self) -> None:
-        """ Load CSV into memory """
-        # check if file exists
-        if not self.csv_path.exists():
-            raise FileNotFoundError(f"CSV file {self.csv_path} not found")
-        
-        # read csv file
-        df = pd.read_csv(self.csv_path)
-
-        # extract timestamps
-        self.timestamps = df.iloc[:, 0].values
-
-        # extract EMG data
-        self.data = df.iloc[:, 1:9].values
-
-        # extract labels (multi-hot encoding)
-        if all(col in df.columns for col in self.finger_columns):
-            self.labels = df[self.finger_columns].values
-            # convert multi-hot encoded labels to indices for classification
-            # for each time step, find the index of the active finger
-            # if multiple fingers are active, take the first one
-            self.label_indices = np.argmax(self.labels, axis=1)
-        else:
-            self.labels = None
-            self.label_indices = None
-
-    def __enter__(self) -> EMGSessionData:
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._file.close()
-
-    def __len__(self) -> int:
-        return len(self.timeseries)
-
-    def __getitem__(self, key: slice | str) -> np.ndarray:
-        return self.timeseries[key]
-    
-
-    def slice(self, start_t: float = -np.inf, end_t: float = np.inf) -> Tuple[np.ndarray, np.ndarray]:
-        """Load and return a contiguous slice of the timeseries windowed by the
-        provided start and end timestamps.
-        
-        Args:
-            start_t (float): The start time of the window to grab
-                (in absolute time). Defaults to selecting from the
-                beginning of the session. (default: ``-np.inf``).
-            end_t (float): The end time of the window to grab
-                (in absolute time). Defaults to selecting until the
-                end of the session. (default: ``np.inf``)
-                
-        Returns:
-            Tuple of (emg_data, labels) for the specified time window
-        """
-        start_idx, end_idx = np.searchsorted(self.timestamps, [start_t, end_t])
-        sliced_data = self.data[start_idx:end_idx]
-        
-        if self.labels is not None:
-            sliced_labels = self.labels[start_idx:end_idx]
-            return sliced_data, sliced_labels
-        
-        return sliced_data, None
 
 @dataclass
 class EMGSessionData:
