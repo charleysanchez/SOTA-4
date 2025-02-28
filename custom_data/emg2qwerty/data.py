@@ -224,8 +224,8 @@ class LabelData:
             "right_ring": ['o', 'l', '.', '9'],
             "left_ring": ['w', 's', 'x', '2'],
 
-            "right_pinky": ['p', ';', '/', '0', '-', '=', '[', ']', '\\', "'", 'right shift'],
-            "left_pinky": ['q', 'a', 'z', '1', '`', 'tab', 'capslock', 'left shift'],
+            "right_pinky": ['p', ';', '/', '0', '-', '=', '[', ']', '\\', "'", 'Key.shift_r', 'Key.backspace', 'Key.enter'],
+            "left_pinky": ['q', 'a', 'z', '1', '`', 'Key.tab', 'Key.capslock', 'Key.shift_l'],
 
             "right_thumb": [' '],
             "left_thumb": [' '],
@@ -234,6 +234,7 @@ class LabelData:
         key = key.lower()
         for finger, keys in finger_map.items():
             if key in keys:
+                if finger 
                 return finger
             
         return "unknown finger"
