@@ -234,9 +234,16 @@ class LabelData:
         key = key.lower()
         for finger, keys in finger_map.items():
             if key in keys:
-                if finger 
-                return finger
-            
+                if finger == 'right_thumb':
+                    return 0
+                elif finger == 'right_pointer':
+                    return 1
+                elif finger == 'right_middle':
+                    return 2
+                elif finger == 'right_ring':
+                    return 3
+                elif finger == 'right_pinky':
+                    return 4            
         return "unknown finger"
 
     @classmethod

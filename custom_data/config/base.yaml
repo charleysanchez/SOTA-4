@@ -1,6 +1,6 @@
 defaults:
-  - user: generic
-  - transforms: log_spectrogram
+  - user: kao_user
+  - transforms: custom_spectrogram
   - model: tds_conv_ctc
   - optimizer: adam
   - lr_scheduler: linear_warmup_cosine_annealing

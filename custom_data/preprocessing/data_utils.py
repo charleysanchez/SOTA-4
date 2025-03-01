@@ -1,16 +1,33 @@
 import os
 import csv
 import numpy as np
+from datetime import datetime
+import pandas as pd
+
+
+def convert_to_unix_time(timestamp_str):
+    """Convert ISO 8601 timestamp to Unix time (float)."""
+    try:
+        return pd.to_datetime(timestamp_str).timestamp()
+    except:
+        return np.nan
 
 def load_SUBJECT(filename):
-    """ load single subject file """
-    # with open(filename, 'r') as csvfile:
+    """Load single subject file and convert timestamps."""
     np.random.seed(0)
-    data = np.genfromtxt(filename, delimiter=',', skip_header=1, dtype=float, usecols=range(1, 15))
-    np.random.shuffle(data)
-    X = data[:, :8]
-    y = data[:, 8:]
-    return X, y
+
+    # Read CSV using pandas
+    df = pd.read_csv(filename)
+
+    # Convert timestamp column to Unix time
+    df.iloc[:, 0] = df.iloc[:, 0].apply(convert_to_unix_time)
+
+    # Convert to numpy arrays
+    timestamps = df.iloc[:, 0].values.astype(np.float64)  # Unix timestamps
+    X = df.iloc[:, 1:9].values.astype(np.float32)  # First 8 EMG channels
+    y = df.iloc[:, 9:].values.astype(np.float32)  # Labels
+
+    return timestamps, X, y
 
 
 def load_CUSTOMDATA(ROOT):
@@ -18,11 +35,11 @@ def load_CUSTOMDATA(ROOT):
     xs = []
     ys = []
     train = os.path.join(ROOT, 'subject1.csv')
-    Xtr, Ytr = load_SUBJECT(train)
+    timestamps_tr, Xtr, Ytr = load_SUBJECT(train)
 
     test = os.path.join(ROOT, 'subject2.csv')
-    Xte, Yte = load_SUBJECT(test)
-    return Xtr, Ytr, Xte, Yte
+    timestamps_te, Xte, Yte = load_SUBJECT(test)
+    return timestamps_tr, Xtr, Ytr, timestamps_te, Xte, Yte
 
 
 def get_CUSTOMDATA(num_training=652845, num_validation=72534, num_test=363251, subtract_mean=True):
@@ -40,17 +57,19 @@ def get_CUSTOMDATA(num_training=652845, num_validation=72534, num_test=363251, s
             raise FileNotFoundError("SOTA-4 directory not found!")
 
     customdata_dir = os.path.join(sota_dir, 'custom_data/kao_data')
-    X_train, y_train, X_test, y_test = load_CUSTOMDATA(customdata_dir)
+    timestamps_train, X_train, y_train, timestamps_test, X_test, y_test = load_CUSTOMDATA(customdata_dir)
 
     # create a mask to get appropriate validation elements out of X_train
     mask = list(range(num_training, num_training + num_validation))
     X_val = X_train[mask]
     y_val = y_train[mask]
+    timestamps_val = timestamps_train[mask]
 
     # repeat for training examples
     mask = list(range(num_training))
     X_train = X_train[mask]
     y_train = y_train[mask]
+    timestamps_train = timestamps_train[mask]
 
     if subtract_mean:
       mean_signal = np.mean(X_train, axis=0)
@@ -59,8 +78,11 @@ def get_CUSTOMDATA(num_training=652845, num_validation=72534, num_test=363251, s
       X_test -= mean_signal
 
     return {
+        'timestamps_train': timestamps_train,
         'X_train': X_train, 'y_train': y_train,
+        'timestamps_val': timestamps_val,
         'X_val': X_val, 'y_val': y_val,
+        'timestamps_test': timestamps_test,
         'X_test': X_test, 'y_test': y_test
     }
 
