@@ -34,6 +34,7 @@ class SpectrogramNorm(nn.Module):
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         T, N, bands, C, freq = inputs.shape  # (T, N, bands=2, C=16, freq)
+        print(inputs.shape)
         assert self.channels == bands * C
 
         x = inputs.movedim(0, -1)  # (N, bands=2, C=16, freq, T)
