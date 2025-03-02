@@ -60,7 +60,7 @@ class CharacterSet:
 
     # Tuples of supported chars and corresponding unicode values.
     CHAR_TO_UNICODE: ClassVar[list[tuple[UniChar, int]]] = [
-        (c, ord(c)) for c in "jkl; "#string.ascii_letters + string.digits + string.punctuation
+        (c, ord(c)) for c in "jkl; r"#string.ascii_letters + string.digits + string.punctuation
         # ('-', 0), (' ', 1), ('j', 2), ('k', 3),('l', 4), (';', 5), ('r', 6)
     ]
 
@@ -135,7 +135,6 @@ class CharacterSet:
     @property
     def num_classes(self) -> int:
         """Number of training classes including null-class (blank label)."""
-        print(f"NUM CLASSES!!!!!!!!!!!!!!!!!!!!!!!! {len(self) + 1}")
         return len(self) + 1
 
     @property
@@ -171,6 +170,7 @@ class CharacterSet:
 
     def unicode_to_label(self, unicode_val: int) -> int:
         """Fetch the categorical label for the given unicode value."""
+        print(self.allowed_unicodes.index(unicode_val))
         return self.allowed_unicodes.index(unicode_val)
 
     def label_to_unicode(self, label: int) -> int:

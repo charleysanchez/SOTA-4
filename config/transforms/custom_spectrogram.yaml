@@ -15,8 +15,8 @@ temporal_jitter:
 
 logspec:
   _target_: emg2qwerty.transforms.LogSpectrogram
-  n_fft: 10
-  hop_length: 10  # Downsamples from 200Hz to 20Hz
+  n_fft: 40
+  hop_length: 5  # Downsamples from 200Hz to 20Hz
 
 specaug:
   _target_: emg2qwerty.transforms.SpecAugment

@@ -182,7 +182,9 @@ class TDSConvCTCModule(pl.LightningModule):
             nn.Linear(num_features, 7), #EDITED
             nn.LogSoftmax(dim=-1),
         )
-        print(f"NUM CLASSES: {charset().num_classes}"*100)
+        print(f"allowed KEYS: {charset().allowed_keys}"*100)
+        print(f" allowed CLASSES: {charset().allowed_unicodes}"*100)
+        print(f" allowed CHARS: {charset().allowed_chars}"*100)
 
         # Criterion
         self.ctc_loss = nn.CTCLoss(blank=0) # EDITED
@@ -258,7 +260,7 @@ class TDSConvCTCModule(pl.LightningModule):
             # target = LabelData.from_labels(new_target)
             target = LabelData.from_labels(targets[: target_lengths[i], i])
             # print(targets[: target_lengths[i], i], target.text)
-            # print(new_target, target.text)
+            print(bad_target, target.text)
             metrics.update(prediction=predictions[i], target=target)
             #print(f'Prediction: {predictions[i]}, Target: {target}')
 
