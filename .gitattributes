@@ -1,3 +1,4 @@
 custom_data/data/custom_test.hdf5 filter=lfs diff=lfs merge=lfs -text
 custom_data/data/custom_train.hdf5 filter=lfs diff=lfs merge=lfs -text
 custom_data/data/custom_val.hdf5 filter=lfs diff=lfs merge=lfs -text
+custom_data/epoch=1-step=6.ckpt filter=lfs diff=lfs merge=lfs -text

@@ -60,7 +60,8 @@ class CharacterSet:
 
     # Tuples of supported chars and corresponding unicode values.
     CHAR_TO_UNICODE: ClassVar[list[tuple[UniChar, int]]] = [
-        (c, ord(c)) for c in string.ascii_letters + string.digits + string.punctuation
+        # (c, ord(c)) for c in string.ascii_letters + string.digits + string.punctuation
+        ('Key.space', 0), ('j', 1), ('k', 2), ('l', 3), (';', 4)
     ]
 
     # Tuples of supported modifier keys (in pynput representation) and
@@ -137,6 +138,7 @@ class CharacterSet:
     @property
     def allowed_keys(self) -> tuple[KeyChar, ...]:
         """Sequence of allowed keys, order respected."""
+        return tuple()
         return tuple(self._key_to_unicode.keys())
 
     @property

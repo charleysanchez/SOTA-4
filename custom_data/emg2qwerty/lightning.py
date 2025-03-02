@@ -139,10 +139,10 @@ class WindowedEMGDataModule(pl.LightningDataModule):
 
 class TDSConvCTCModule(pl.LightningModule):
     NUM_BANDS: ClassVar[int] = 2
-    # ELECTRODE_CHANNELS: ClassVar[int] = 16
+    ELECTRODE_CHANNELS: ClassVar[int] = 16
 
     # for our custom dataset
-    ELECTRODE_CHANNELS: ClassVar[int] = 8
+    # ELECTRODE_CHANNELS: ClassVar[int] = 8
 
     def __init__(
         self,
@@ -178,7 +178,7 @@ class TDSConvCTCModule(pl.LightningModule):
                 kernel_width=kernel_width,
             ),
             # (T, N, num_classes)
-            nn.Linear(num_features, charset().num_classes),
+            nn.Linear(num_features, 6),
             nn.LogSoftmax(dim=-1),
         )
 

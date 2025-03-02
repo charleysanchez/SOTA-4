@@ -426,9 +426,18 @@ class LabelData:
                 same length as ``labels``.
             _charset (CharacterSet): Optional ``CharacterSet`` override.
         """
-        _charset = _charset or charset()
+        # _charset = _charset or charset()
 
-        text = _charset.labels_to_str(labels)
+        # text = _charset.labels_to_str(labels)
+        label_to_key = {
+            96: ' ',
+            97: 'j',
+            98: 'k',
+            99: 'l',
+            100: ';',
+            101: 'rest'
+        }
+        text = [label_to_key[label] for label in labels]
         return cls(text, timestamps, _charset=_charset)
 
     @property
