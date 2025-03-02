@@ -4,7 +4,7 @@ module:
   in_features: 48  # freq * channels = (n_fft // 2 + 1) * 8
   mlp_features: [384]
   block_channels: [24, 24, 24, 24]
-  kernel_width: 32  # Total temporal receptive field of 125 samples given 4 layers
+  kernel_width: 4  # Total temporal receptive field of 125 samples given 4 layers
 
 datamodule:
   _target_: emg2qwerty.lightning.WindowedEMGDataModule

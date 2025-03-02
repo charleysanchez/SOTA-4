@@ -393,11 +393,11 @@ class LabelData:
         _charset = _charset or charset()
 
         
-        if test_flag:
-            label_to_key = {0: ' ', 1: 'j', 2: 'k', 3: 'l', 4: ';', 5: 'rest'}
-            text = [label_to_key[label] for label in labels]
-        else: 
-            text = _charset.labels_to_str(labels)
+        # if test_flag:
+        label_to_key = {0: '-', 1: ' ', 2: 'j', 3: 'k', 4: 'l', 5: ';', 6: 'r'}
+        text = "".join([label_to_key[label] for label in labels])
+        # else:
+            # text = _charset.labels_to_str(labels)
             
         return cls(text, timestamps, _charset=_charset)
 

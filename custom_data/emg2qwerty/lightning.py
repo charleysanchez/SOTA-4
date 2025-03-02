@@ -231,14 +231,36 @@ class TDSConvCTCModule(pl.LightningModule):
             emission_lengths=emission_lengths.detach().cpu().numpy(),
         )
 
+       # Decode emissions
+        predictions = self.decoder.decode_batch(
+            emissions=emissions.detach().cpu().numpy(),
+            emission_lengths=emission_lengths.detach().cpu().numpy(),
+            test_flag = True,
+        )
+
+        t_to_correct = {
+            9: 2,
+            78: 5,
+            17: 6,
+            96: 1,
+            11: 4,
+            10: 3
+        }
+
         # Update metrics
         metrics = self.metrics[f"{phase}_metrics"]
         targets = targets.detach().cpu().numpy()
         target_lengths = target_lengths.detach().cpu().numpy()
         for i in range(N):
             # Unpad targets (T, N) for batch entry
-            target = LabelData.from_labels(targets[: target_lengths[i], i])
+            bad_target = targets[: target_lengths[i], i]
+            new_target = [t_to_correct[t] for t in bad_target]
+            target = LabelData.from_labels(new_target)
+            # target = LabelData.from_labels(targets[: target_lengths[i], i])
+            # print(targets[: target_lengths[i], i], target.text)
+            print(new_target, target.text)
             metrics.update(prediction=predictions[i], target=target)
+            #print(f'Prediction: {predictions[i]}, Target: {target}')
 
         self.log(f"{phase}/loss", loss, batch_size=N, sync_dist=True)
         return loss

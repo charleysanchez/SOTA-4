@@ -1,0 +1,2 @@
+- user=kao_user
+- trainer.accelerator=cpu

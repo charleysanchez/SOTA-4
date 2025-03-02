@@ -157,6 +157,7 @@ class TDSConvCTCModule(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
+
         num_features = self.NUM_BANDS * mlp_features[-1]
 
         # Model
@@ -178,12 +179,13 @@ class TDSConvCTCModule(pl.LightningModule):
                 kernel_width=kernel_width,
             ),
             # (T, N, num_classes)
-            nn.Linear(num_features, 6), #EDITED
+            nn.Linear(num_features, 7), #EDITED
             nn.LogSoftmax(dim=-1),
         )
+        print(f"NUM CLASSES: {charset().num_classes}"*100)
 
         # Criterion
-        self.ctc_loss = nn.CTCLoss() # EDITED
+        self.ctc_loss = nn.CTCLoss(blank=0) # EDITED
 
         # Decoder
         self.decoder = instantiate(decoder)
@@ -209,6 +211,7 @@ class TDSConvCTCModule(pl.LightningModule):
         target_lengths = batch["target_lengths"]
         N = len(input_lengths)  # batch_size
 
+        
         emissions = self.forward(inputs)
 
         # Shrink input lengths by an amount equivalent to the conv encoder's
@@ -216,6 +219,8 @@ class TDSConvCTCModule(pl.LightningModule):
         # NOTE: This assumes the encoder doesn't perform any temporal downsampling
         # such as by striding.
         T_diff = inputs.shape[0] - emissions.shape[0]
+        # print(T_diff)
+        # print(emissions.shape[0], inputs.shape[0])
         emission_lengths = input_lengths - T_diff
 
         
@@ -233,13 +238,27 @@ class TDSConvCTCModule(pl.LightningModule):
             test_flag = True,
         )
 
+        # t_to_correct = {
+        #     9: 2,
+        #     78: 5,
+        #     17: 6,
+        #     96: 1,
+        #     11: 4,
+        #     10: 3
+        # }
+
         # Update metrics
         metrics = self.metrics[f"{phase}_metrics"]
         targets = targets.detach().cpu().numpy()
         target_lengths = target_lengths.detach().cpu().numpy()
         for i in range(N):
             # Unpad targets (T, N) for batch entry
+            bad_target = targets[: target_lengths[i], i]
+            # new_target = [t_to_correct[t] for t in bad_target]
+            # target = LabelData.from_labels(new_target)
             target = LabelData.from_labels(targets[: target_lengths[i], i])
+            # print(targets[: target_lengths[i], i], target.text)
+            # print(new_target, target.text)
             metrics.update(prediction=predictions[i], target=target)
             #print(f'Prediction: {predictions[i]}, Target: {target}')
 
