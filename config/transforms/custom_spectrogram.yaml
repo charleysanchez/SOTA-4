@@ -15,15 +15,15 @@ temporal_jitter:
 
 logspec:
   _target_: emg2qwerty.transforms.LogSpectrogram
-  n_fft: 10
-  hop_length: 10  # Downsamples from 200Hz to 20Hz
+  n_fft: 64
+  hop_length: 8  # Downsamples from 200Hz to 20Hz
 
 specaug:
   _target_: emg2qwerty.transforms.SpecAugment
   n_time_masks: 3
   time_mask_param: 3  # Max 200ms per time mask for 125Hz spectrogram
-  n_freq_masks: 2
-  freq_mask_param: 4
+  n_freq_masks: 3
+  freq_mask_param: 6
 
 transforms:
   train:

@@ -1,3 +1,0 @@
-- user=kao_user
-- trainer.accelerator=gpu
-- trainer.devices=1

@@ -141,11 +141,27 @@ def main(config: DictConfig):
             trainer.checkpoint_callback.best_model_path
         )
 
+    log_file = "training.log"
+    logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler()  # Keep logging to console as well
+    ]
+)
+    
+    
+
     # Validate and test on the best checkpoint (if training), or on the
     # loaded `config.checkpoint` (otherwise)
     val_metrics = trainer.validate(module, datamodule)
+    log.info(f"Validation Metrics: {val_metrics}")
+
 
     test_metrics = trainer.test(module, datamodule)
+    log.info(f"Test Metrics: {test_metrics}")
+
 
     results = {
         "val_metrics": val_metrics,
