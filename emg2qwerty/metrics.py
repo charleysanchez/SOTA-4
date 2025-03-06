@@ -39,7 +39,7 @@ class CharacterErrorRates(Metric):
     def update(self, prediction: LabelData, target: LabelData) -> None:
         # Use Levenshtein.editops rather than Levenshtein.distance to
         # break down errors into insertions, deletions and substitutions.
-        print(f'PREDICTION.TEXT {prediction.text}, TARGET.TEXT {target.text}')
+        print(f'PREDICTION.TEXT {prediction.text},\n\n PREDICTION.LABELS {prediction.labels}, \n TARGET.LABELS: {target.labels} \n\n TARGET.TEXT {target.text}')
         editops = Levenshtein.editops(prediction.text, target.text)
         edits = Counter(op for op, _, _ in editops)
 
@@ -51,9 +51,13 @@ class CharacterErrorRates(Metric):
 
     def compute(self) -> dict[str, float]:
         def _error_rate(errors: torch.Tensor) -> float:
-            return float(errors.item() / (self.target_len.item() * 100.0 + 1e-7))
+            return float(errors.item() / (self.target_len.item() + 1e-7)  * 100.0)
 
         return {
+            "INSERTIONS": self.insertions,
+            "DELETIONS": self.deletions,
+            "SUBSTITUTIONS": self.substitutions,
+            "LENGTH": self.target_len,
             "CER": _error_rate(self.insertions + self.deletions + self.substitutions),
             "IER": _error_rate(self.insertions),
             "DER": _error_rate(self.deletions),

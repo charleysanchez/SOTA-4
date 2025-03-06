@@ -1,0 +1,15 @@
+# @package _global_
+module:
+  _target_: emg2qwerty.lightning.TDSConvCTCModule
+  in_features: 136  # freq * channels = (n_fft // 2 + 1) * 8
+  mlp_features: [512]
+  block_channels: [32, 32, 32, 32]
+  kernel_width: 16  # Total temporal receptive field of 125 samples given 4 layers
+  checkpoint_path: epoc=39-step=4800.ckpt  # Path to your .ckpt file
+  freeze_encoder: True  # Freeze pretrained layers initially
+  optimizer:
+    lr: 1e-4  # Lower learning rate for fine-tuning
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 800  # 4 sec windows for 2kHz EMG
+  padding: [180, 20]  # 900ms past context, 100ms future context

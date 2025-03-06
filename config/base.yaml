@@ -20,7 +20,7 @@ trainer:
   accelerator: gpu
   devices: 1
   num_nodes: 1
-  max_epochs: 150
+  max_epochs: 30
   default_root_dir: ${hydra:runtime.output_dir}
 
 callbacks:
@@ -31,6 +31,7 @@ callbacks:
     mode: ${monitor_mode}
     save_last: True
     verbose: True
+
 
 dataset:
   root: ${hydra:runtime.cwd}/data

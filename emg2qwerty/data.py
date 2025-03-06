@@ -394,10 +394,12 @@ class LabelData:
 
         
         # if test_flag:
-        label_to_key = {0: '-', 1: ' ', 2: 'j', 3: 'k', 4: 'l', 5: ';', 6: 'r'}
-        text = "".join([label_to_key[label] for label in labels])
+        # label_to_key = {0: ' ', 1: 'j', 2: 'k', 3: 'l', 4: ';', 5: 'r'}
+        # text = "".join([label_to_key[label] for label in labels])
         # else:
-            # text = _charset.labels_to_str(labels)
+        text = _charset.labels_to_str(labels)
+        print("Label mappings:", {i: _charset.label_to_char(i) for i in range(len(_charset))})
+
             
         return cls(text, timestamps, _charset=_charset)
 

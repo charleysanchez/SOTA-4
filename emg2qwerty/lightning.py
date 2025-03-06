@@ -153,6 +153,7 @@ class TDSConvCTCModule(pl.LightningModule):
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
         decoder: DictConfig,
+        # freeze_encoder: bool=False,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
@@ -187,7 +188,7 @@ class TDSConvCTCModule(pl.LightningModule):
         print(f" allowed CHARS: {charset().allowed_chars}"*100)
 
         # Criterion
-        self.ctc_loss = nn.CTCLoss(blank=0) # EDITED
+        self.ctc_loss = nn.CTCLoss(blank=6) # EDITED
 
         # Decoder
         self.decoder = instantiate(decoder)
@@ -221,8 +222,6 @@ class TDSConvCTCModule(pl.LightningModule):
         # NOTE: This assumes the encoder doesn't perform any temporal downsampling
         # such as by striding.
         T_diff = inputs.shape[0] - emissions.shape[0]
-        # print(T_diff)
-        # print(emissions.shape[0], inputs.shape[0])
         emission_lengths = input_lengths - T_diff
 
         
@@ -240,27 +239,13 @@ class TDSConvCTCModule(pl.LightningModule):
             test_flag = True,
         )
 
-        # t_to_correct = {
-        #     9: 2,
-        #     78: 5,
-        #     17: 6,
-        #     96: 1,
-        #     11: 4,
-        #     10: 3
-        # }
-
         # Update metrics
         metrics = self.metrics[f"{phase}_metrics"]
         targets = targets.detach().cpu().numpy()
         target_lengths = target_lengths.detach().cpu().numpy()
         for i in range(N):
             # Unpad targets (T, N) for batch entry
-            bad_target = targets[: target_lengths[i], i]
-            # new_target = [t_to_correct[t] for t in bad_target]
-            # target = LabelData.from_labels(new_target)
             target = LabelData.from_labels(targets[: target_lengths[i], i])
-            # print(targets[: target_lengths[i], i], target.text)
-            print(bad_target, target.text)
             metrics.update(prediction=predictions[i], target=target)
             #print(f'Prediction: {predictions[i]}, Target: {target}')
 

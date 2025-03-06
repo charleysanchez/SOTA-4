@@ -129,8 +129,8 @@ class CTCGreedyDecoder(Decoder):
         assert len(emissions) == len(timestamps)
 
         for label, timestamp in zip(emissions.argmax(-1), timestamps):
-            # if label != self._charset.null_class and label != self.prev_label:
-            if label != self.prev_label:
+            if label != self._charset.null_class and label != self.prev_label:
+            # if label != self.prev_label:
                 self.decoding.append(label)
                 self.timestamps.append(timestamp)
             self.prev_label = label
