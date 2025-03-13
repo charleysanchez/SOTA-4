@@ -9,6 +9,10 @@ band_rotation:
     _target_: emg2qwerty.transforms.RandomBandRotation
     offsets: [-1, 0, 1]
 
+duplicate_channel:
+  _target_: emg2qwerty.transforms.ChannelDuplicator
+  target_channels: 16  # Or whatever dimension you want to duplicate along
+
 temporal_jitter:
   _target_: emg2qwerty.transforms.TemporalAlignmentJitter
   max_offset: 12  # Max 60ms jitter for 2kHz EMG
@@ -16,7 +20,7 @@ temporal_jitter:
 logspec:
   _target_: emg2qwerty.transforms.LogSpectrogram
   n_fft: 64
-  hop_length: 8  # Downsamples from 200Hz to 20Hz
+  hop_length: 10  # Downsamples from 200Hz to 20Hz
 
 specaug:
   _target_: emg2qwerty.transforms.SpecAugment
@@ -28,6 +32,7 @@ specaug:
 transforms:
   train:
     - ${to_tensor}
+    - ${duplicate_channel}
     - ${band_rotation}
     - ${temporal_jitter}
     - ${logspec}
@@ -35,6 +40,7 @@ transforms:
 
   val:
     - ${to_tensor}
+    - ${duplicate_channel}
     - ${logspec}
 
   test: ${transforms.val}

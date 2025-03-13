@@ -1,9 +1,9 @@
 defaults:
   - user: kao_user
   - transforms: custom_spectrogram
-  - model: tds_conv_ctc
-  - optimizer: adam
-  - lr_scheduler: linear_warmup_cosine_annealing
+  - model: tds_lstm_ctc
+  - optimizer: adamw
+  - lr_scheduler: one_cycle
   - decoder: ctc_greedy
   - cluster: local
   - _self_
@@ -20,8 +20,11 @@ trainer:
   accelerator: gpu
   devices: 1
   num_nodes: 1
-  max_epochs: 150
+  max_epochs: 300
+  min_epochs: 20
+  gradient_clip_val: 1.0
   default_root_dir: ${hydra:runtime.output_dir}
+  precision: 16
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor

@@ -1,0 +1,12 @@
+# @package _global_
+lr_scheduler:
+  scheduler:
+    _target_: torch.optim.lr_scheduler.OneCycleLR
+    max_lr: 0.002
+    steps_per_epoch: 15
+    epochs: ${trainer.max_epochs}
+    pct_start: 0.3
+    div_factor: 25
+    final_div_factor: 10000.0
+    anneal_strategy: cos
+  interval: step

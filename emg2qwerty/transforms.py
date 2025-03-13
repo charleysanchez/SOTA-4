@@ -243,3 +243,92 @@ class SpecAugment:
 
         # (..., C, freq, T) -> (T, ..., C, freq)
         return x.movedim(-1, 0)
+
+
+### NEW DATA AUGMENTATION
+@dataclass
+class GaussianNoise:
+    """Adds Gaussian noise to the EMG signal.
+    
+    This simulates the noise that might be present in real-world EMG recordings
+    due to electronic interference, movement artifacts, etc.
+    
+    Args:
+        mean (float): Mean of the Gaussian noise to add. (default: 0.0)
+        std_range (tuple): Range of standard deviation values to sample from.
+            The actual std will be randomly chosen from this range for each call.
+            (default: (0.01, 0.05))
+    """
+    
+    mean: float = 0.0
+    std_range: tuple[float, float] = (0.01, 0.05)
+    
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        std = np.random.uniform(self.std_range[0], self.std_range[1])
+        noise = torch.randn_like(tensor) * std + self.mean
+        return tensor + noise
+
+
+@dataclass
+class RandomScaling:
+    """Applies random amplitude scaling to the EMG signal.
+    
+    This simulates variations in signal strength due to electrode placement,
+    skin conductivity differences, etc.
+    
+    Args:
+        scale_range (tuple): Range of scaling factors to sample from.
+            (default: (0.8, 1.2))
+    """
+    
+    scale_range: tuple[float, float] = (0.8, 1.2)
+    
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        scale = np.random.uniform(self.scale_range[0], self.scale_range[1])
+        return tensor * scale
+
+
+class ChannelDuplicator:
+    """Duplicates channels in the input tensor to match target_channels.
+    
+    For spectrogram input shape (T, B, 2, C, F), duplicates along dim=3 (channel dim).
+    """
+    def __init__(self, target_channels: int = 16):
+        self.target_channels = target_channels
+        print(f"Initializing ChannelDuplicator with target_channels={target_channels}")
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:        
+        if len(x.shape) == 3:
+            T, B, C = x.shape
+            # Check that target_channels is multiple of input channels
+            assert self.target_channels % C == 0, f"Target channels ({self.target_channels}) must be multiple of input channels ({C})"
+            repeat_factor = self.target_channels // C
+            
+            # Duplicate along channel dimension (dim=3)
+            x = x.repeat_interleave(1, dim=2)  # First ensure we have individual channels
+            x = torch.cat([x] * repeat_factor, dim=2)  # Then repeat the whole sequence
+            
+            # Verify the output has the correct number of channels
+            assert x.shape[2] == self.target_channels, f"Expected {self.target_channels} channels, got {x.shape[2]}"
+            
+            return x
+        else:
+            raise ValueError(f"Expected 5D tensor (T, B, 2, C, F), got shape {x.shape}")
+
+# @dataclass
+# class ChannelDuplicator:
+#     """Duplicates channels in the input tensor.
+    
+#     This transform is used to duplicate channels along a specified dimension,
+#     which can be useful for various data augmentation or model architectural needs.
+    
+#     Args:
+#         channel_dim (int): The dimension along which to duplicate channels. (default: 3)
+#     """
+    
+#     channel_dim: int = 3
+    
+#     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+#         # Duplicate along the specified channel dimension
+#         print(tensor.shape)
+#         return torch.cat([tensor, tensor], dim=self.channel_dim)

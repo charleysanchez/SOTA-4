@@ -90,7 +90,6 @@ class Decoder(abc.ABC):
         assert emission_lengths.ndim == 1
         N = emissions.shape[1]
 
-        print(f'EMISSION MATRIX SHAPE: {emissions.shape}')
 
         decodings = []
         for i in range(N):

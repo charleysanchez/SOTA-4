@@ -39,7 +39,6 @@ class CharacterErrorRates(Metric):
     def update(self, prediction: LabelData, target: LabelData) -> None:
         # Use Levenshtein.editops rather than Levenshtein.distance to
         # break down errors into insertions, deletions and substitutions.
-        print(f'PREDICTION.TEXT {prediction.text},\n\n PREDICTION.LABELS {prediction.labels}, \n TARGET.LABELS: {target.labels} \n\n TARGET.TEXT {target.text}')
         editops = Levenshtein.editops(prediction.text, target.text)
         edits = Counter(op for op, _, _ in editops)
 

@@ -6,6 +6,7 @@
 
 from collections.abc import Sequence
 
+import math
 import torch
 from torch import nn
 
@@ -229,15 +230,25 @@ class TDSFullyConnectedBlock(nn.Module):
         self.fc_block = nn.Sequential(
             nn.Linear(num_features, num_features),
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(num_features, num_features),
         )
         self.layer_norm = nn.LayerNorm(num_features)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = inputs  # TNC
+        T, N, C = inputs.shape
+
+        # Reshape for BatchNorm1d: (T * N, C)
+        x = inputs.view(-1, C)  
+
         x = self.fc_block(x)
-        x = x + inputs
-        return self.layer_norm(x)  # TNC
+
+        # Reshape back to (T, N, C)
+        x = x.view(T, N, C)
+
+        x = x + inputs  # Residual connection
+        return self.layer_norm(x)  # LayerNorm still on (T, N, C)
+
 
 
 class TDSConvEncoder(nn.Module):
@@ -278,3 +289,112 @@ class TDSConvEncoder(nn.Module):
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.tds_conv_blocks(inputs)  # (T, N, num_features)
+    
+
+class TDSLSTMEncoder(nn.Module):
+    def __init__(
+        self,
+        num_features: int,
+        lstm_hidden_size: int = 128,
+        num_lstm_layers: int = 2
+    ) -> None:
+        super().__init__()
+
+        self.input_dropout = nn.Dropout(0.4)
+
+        self.lstm_layers = nn.LSTM(
+           input_size=num_features,
+           hidden_size=lstm_hidden_size,
+           num_layers=num_lstm_layers,
+           batch_first=False, # input shape: (T, N, num_features)
+           bidirectional=True,
+           dropout=0.3
+       )
+
+        self.fc_block = TDSFullyConnectedBlock(lstm_hidden_size * 2)
+        self.dropout = nn.Dropout(0.4)
+        self.out_layer = nn.Linear(lstm_hidden_size * 2, num_features)
+        self.layer_norm = nn.LayerNorm(lstm_hidden_size * 2)
+
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        residual = inputs
+        x = self.input_dropout(inputs)
+        x, _ = self.lstm_layers(x) # (T, N, lstm_hidden_size * 2)
+        x = self.layer_norm(x)
+        x = self.fc_block(x)
+        x = self.dropout(x)
+        x = self.out_layer(x)
+        if x.shape[-1] == residual.shape[-1]:  # Check if dimensions match
+            x = x + residual  # Add residual connection
+        return x
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+        
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(1, max_len, d_model)
+        pe[0, :, 0::2] = torch.sin(position * div_term)
+        pe[0, :, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = x + self.pe[:, :x.size(1)]
+        return self.dropout(x)
+
+class TDSTransformerEncoder(nn.Module):
+    def __init__(
+        self,
+        num_features: int,
+        d_model: int = 256,
+        num_layers: int = 4,
+        nhead: int = 8,
+        dim_feedforward: int = 1024,
+        dropout: float = 0.3  # Increased dropout
+    ) -> None:
+        super().__init__()
+        
+        # Input processing
+        self.input_proj = nn.Sequential(
+            nn.Linear(num_features, d_model),
+            nn.LayerNorm(d_model),  # Added normalization
+            nn.Dropout(dropout)
+        )
+        # Positional encoding with learned scaling
+        self.pos_encoder = PositionalEncoding(d_model, dropout, max_len=5000)
+        self.pos_scaler = nn.Parameter(torch.ones(1))  # Learned positional scaling
+        
+        # Transformer with pre-norm architecture
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            batch_first=False,
+            norm_first=True  # Crucial for stability
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
+        
+        # Output layers with constrained initialization
+        self.fc_block = TDSFullyConnectedBlock(d_model)
+        self.out_layer = nn.Linear(d_model, num_features)
+        self._init_weights()  # Critical proper initialization
+
+    def _init_weights(self):
+        # Prevent saturated initial outputs
+        nn.init.xavier_uniform_(self.out_layer.weight)
+        nn.init.constant_(self.out_layer.bias, 0)
+        for p in self.transformer.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_normal_(p)
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        x = self.input_proj(inputs)
+        x = x * self.pos_scaler  # Learnable scale
+        x = self.pos_encoder(x)
+        x = self.transformer(x)
+        x = self.fc_block(x)
+        return self.out_layer(x)

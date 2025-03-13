@@ -171,7 +171,6 @@ class CharacterSet:
 
     def unicode_to_label(self, unicode_val: int) -> int:
         """Fetch the categorical label for the given unicode value."""
-        print(self.allowed_unicodes.index(unicode_val))
         return self.allowed_unicodes.index(unicode_val)
 
     def label_to_unicode(self, label: int) -> int:
