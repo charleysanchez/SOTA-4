@@ -1,0 +1,6 @@
+# @package _global_
+optimizer:
+  _target_: torch.optim.RAdam
+  lr: 3e-4
+  betas: [0.9, 0.999]
+  weight_decay: 1e-5
