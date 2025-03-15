@@ -53,10 +53,6 @@ class CharacterErrorRates(Metric):
             return float(errors.item() / (self.target_len.item() + 1e-7)  * 100.0)
 
         return {
-            "INSERTIONS": self.insertions,
-            "DELETIONS": self.deletions,
-            "SUBSTITUTIONS": self.substitutions,
-            "LENGTH": self.target_len,
             "CER": _error_rate(self.insertions + self.deletions + self.substitutions),
             "IER": _error_rate(self.insertions),
             "DER": _error_rate(self.deletions),
