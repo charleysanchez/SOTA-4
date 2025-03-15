@@ -314,21 +314,3 @@ class ChannelDuplicator:
             return x
         else:
             raise ValueError(f"Expected 5D tensor (T, B, 2, C, F), got shape {x.shape}")
-
-# @dataclass
-# class ChannelDuplicator:
-#     """Duplicates channels in the input tensor.
-    
-#     This transform is used to duplicate channels along a specified dimension,
-#     which can be useful for various data augmentation or model architectural needs.
-    
-#     Args:
-#         channel_dim (int): The dimension along which to duplicate channels. (default: 3)
-#     """
-    
-#     channel_dim: int = 3
-    
-#     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-#         # Duplicate along the specified channel dimension
-#         print(tensor.shape)
-#         return torch.cat([tensor, tensor], dim=self.channel_dim)
