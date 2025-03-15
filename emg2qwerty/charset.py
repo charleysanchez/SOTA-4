@@ -60,29 +60,17 @@ class CharacterSet:
 
     # Tuples of supported chars and corresponding unicode values.
     CHAR_TO_UNICODE: ClassVar[list[tuple[UniChar, int]]] = [
-        (c, ord(c)) for c in " jkl;r"#string.ascii_letters + string.digits + string.punctuation
-        # ('-', 0), (' ', 1), ('j', 2), ('k', 3),('l', 4), (';', 5), ('r', 6)
+        (c, ord(c)) for c in " jkl;r"
     ]
 
-    # Tuples of supported modifier keys (in pynput representation) and
-    # corresponding unicode values.
-    # https://wincent.com/wiki/Unicode_representations_of_modifier_keys.
-    # MODIFIER_TO_UNICODE: ClassVar[list[tuple[KeyChar, int]]] = [
-    #     ("Key.backspace", 9003),  # ⌫
-    #     ("Key.enter", 9166),  # ⏎
-    #     ("Key.space", 32),
-    #     ("Key.shift", 8679),  # ⇧
-    # ]
 
     # Map of supported characters/keys to unicode values.
     # NOTE: The order matters for class label generation.
     KEY_TO_UNICODE: ClassVar[OrderedDict] = OrderedDict(
         [
             *CHAR_TO_UNICODE,
-            # *MODIFIER_TO_UNICODE,
         ]
     )
-    # KEY_TO_UNICODE: ClassVar[OrderedDict] = OrderedDict([*CHAR_TO_UNICODE])
 
     # Map of unicode chars to pynput key representations.
     UNICHAR_TO_KEY: ClassVar[Mapping[UniChar, KeyChar]] = {
@@ -129,8 +117,6 @@ class CharacterSet:
     @property
     def null_class(self) -> int:
         """Categorical label of the null-class (blank label)."""
-        # return 0
-        # return len(self)
         return 6
 
     @property
